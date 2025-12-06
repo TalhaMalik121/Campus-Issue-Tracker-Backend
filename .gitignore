@@ -1,0 +1,14 @@
+# 1. Dependency Directories
+node_modules/
+
+# 2. Environment Variables (CRITICAL SECURITY)
+.env
+
+# 3. User Uploads (Don't version control user data)
+uploads/
+
+# 4. Logs and System Files
+npm-debug.log
+*.log
+.DS_Store
+Thumbs.db
