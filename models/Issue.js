@@ -1,4 +1,3 @@
-// backend/models/Issue.js
 const mongoose = require('mongoose');
 
 const IssueSchema = new mongoose.Schema({
