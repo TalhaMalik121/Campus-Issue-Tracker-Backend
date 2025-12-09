@@ -1,4 +1,6 @@
 const Issue = require('../models/Issue');
+const User = require('../models/User');
+const sendEmail = require('../utils/sendEmail');
 
 // @desc    Get all issues
 // @route   GET /api/issues
@@ -58,6 +60,36 @@ const updateIssueStatus = async (req, res) => {
         );
 
         if (!updatedIssue) return res.status(404).json({ error: "Issue not found" });
+        // 📧 CHECK & SEND EMAIL IF RESOLVED OR IN PROGRESS
+        if (status === 'Resolved' || status === 'In Progress') {
+            try {
+                // Find user by name (since Issue stores created_by as name)
+                const user = await User.findOne({ name: updatedIssue.created_by });
+
+                if (user && user.email) {
+                    const subject = status === 'Resolved'
+                        ? "Issue Resolved - Campus Issue Tracker"
+                        : "Issue Update: In Progress - Campus Issue Tracker";
+
+                    const message = status === 'Resolved'
+                        ? `Hello ${user.name},\n\nYour issue titled "${updatedIssue.title}" has been resolved.\n\nThanks for reporting!`
+                        : `Hello ${user.name},\n\nYour issue titled "${updatedIssue.title}" is now marked as "In Progress". We are working on it!\n\nThanks for your patience.`;
+
+                    await sendEmail({
+                        to: user.email,
+                        subject: subject,
+                        text: message
+                    });
+                    console.log(`${status} notification email sent to ${user.email}`);
+                } else {
+                    console.log(`User ${updatedIssue.created_by} not found, cannot send email.`);
+                }
+            } catch (emailErr) {
+                console.error(`Error sending ${status} email:`, emailErr);
+                // We do NOT stop response here, just log error
+            }
+        }
+
         res.json(updatedIssue);
     } catch (err) {
         res.status(400).json({ error: err.message });
