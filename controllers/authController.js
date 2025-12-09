@@ -9,8 +9,8 @@ const jwt = require('jsonwebtoken');
 //     console.log(`[EMAIL MOCK] Sending to ${to}: ${subject} - ${text}`);
 const sendEmail = require('../utils/sendEmail');
 
-    // Implement your Nodemailer logic here!
-    // Example: await transporter.sendMail({ from: process.env.EMAIL_USER, to, subject, text });
+// Implement your Nodemailer logic here!
+// Example: await transporter.sendMail({ from: process.env.EMAIL_USER, to, subject, text });
 // };
 
 
@@ -23,7 +23,7 @@ const sendOtp = async (req, res) => {
     if (!email || !email.toLowerCase().endsWith('.edu.pk')) {
         return res.status(400).json({ error: 'Registration is restricted to institutional emails ending in .edu.pk.' });
     }
-    
+
     // 2. Check if user is already fully registered
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -32,12 +32,12 @@ const sendOtp = async (req, res) => {
 
     try {
         // 3. Generate unique 6-digit OTP
-        const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); 
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
         // 4. Save/Update OTP in database (resets expiration time)
         await OTPVerification.findOneAndUpdate(
             { email },
-            { otp: otpCode, createdAt: new Date() }, 
+            { otp: otpCode, createdAt: new Date() },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
@@ -49,7 +49,7 @@ const sendOtp = async (req, res) => {
         });
 
         res.status(200).json({ message: 'Verification code sent successfully.' });
-        
+
     } catch (error) {
         console.error('Error sending OTP:', error);
         res.status(500).json({ error: 'Server error during OTP generation or email sending.' });
@@ -61,13 +61,13 @@ const sendOtp = async (req, res) => {
 // @route   POST /api/auth/signup
 const signup = async (req, res) => {
     try {
-        const { name, email, password, otp } = req.body; // 🔑 NOW REQUIRES OTP
+        const { name, email, password, otp, rollNo } = req.body; // 🔑 NOW REQUIRES OTP & Roll No
 
         // 1. Basic check for all fields
-        if (!name || !email || !password || !otp) {
-            return res.status(400).json({ error: 'Missing required registration fields, including OTP.' });
+        if (!name || !email || !password || !otp || !rollNo) {
+            return res.status(400).json({ error: 'Missing required registration fields, including OTP and Roll No.' });
         }
-        
+
         // 2. 🔑 OTP Validation: Find the matching, unexpired OTP record
         const otpRecord = await OTPVerification.findOne({ email, otp });
 
@@ -90,9 +90,10 @@ const signup = async (req, res) => {
         await User.create({
             name,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            rollNo
         });
-        
+
         // 6. 🔑 Cleanup: Delete the used OTP record
         await OTPVerification.deleteOne({ email });
 
@@ -115,6 +116,11 @@ const login = async (req, res) => {
             return res.status(400).json({ error: 'Invalid credentials' });
         }
 
+        // 🔑 Check if user is blocked
+        if (user.isBlocked) {
+            return res.status(403).json({ error: 'Your account has been blocked by the administrator.' });
+        }
+
         // 2. Check if password matches
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
@@ -129,12 +135,12 @@ const login = async (req, res) => {
         // Assuming user schema has a 'role' property, we should include it here
         res.json({
             token,
-            user: { 
-                id: user._id, 
-                name: user.name, 
+            user: {
+                id: user._id,
+                name: user.name,
                 email: user.email,
                 role: user.role || 'User' // Default to 'User' if not specified
-            } 
+            }
         });
 
     } catch (err) {

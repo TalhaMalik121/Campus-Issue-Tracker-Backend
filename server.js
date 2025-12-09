@@ -22,6 +22,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Any request to /api/issues will be sent to our issueRoutes file
 app.use('/api/issues', issueRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/users', require('./routes/userRoutes')); // 🔑 Register User Routes
 
 // Simple root check
 app.get('/', (req, res) => {

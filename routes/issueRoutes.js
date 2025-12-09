@@ -35,21 +35,33 @@
 // module.exports = router;
 const express = require('express');
 const router = express.Router();
-const upload = require('../middleware/upload'); 
+const upload = require('../middleware/upload');
 // 🔑 Import userOnly
-const { protect, admin, userOnly } = require('../middleware/auth'); 
-const { 
-    getIssues, 
-    createIssue, 
-    updateIssueStatus 
+const { protect, admin, userOnly } = require('../middleware/auth');
+const {
+    getIssues,
+    createIssue,
+    updateIssueStatus,
+    addComment,
+    addReply,
+    toggleLike,
+    toggleIssueLike
 } = require('../controllers/issueController');
 
 // Define Routes
 router.get('/', protect, getIssues);
 
 // 🔑 UPDATED: Added userOnly middleware so Admins cannot post
-router.post('/', protect, userOnly, upload.array('attachments'), createIssue); 
+router.post('/', protect, userOnly, upload.array('attachments'), createIssue);
 
 router.patch('/:id/status', protect, admin, updateIssueStatus);
+
+// 🔑 Like Issue Route
+router.patch('/:id/like', protect, toggleIssueLike);
+
+// 🔑 Comment Routes
+router.post('/:id/comments', protect, addComment);
+router.post('/:id/comments/:commentId/replies', protect, addReply);
+router.patch('/:id/comments/:commentId/like', protect, toggleLike);
 
 module.exports = router;

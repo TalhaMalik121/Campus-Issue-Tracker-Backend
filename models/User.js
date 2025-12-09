@@ -16,7 +16,11 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true }, // Added lowercase
   password: { type: String, required: true }, // Hashed version
   // 🔑 Added role for user permissions
-  role: { type: String, enum: ['Admin', 'User'], default: 'User' } 
+  role: { type: String, enum: ['Admin', 'User'], default: 'User' },
+  // 🔑 Added rollNo for student identification
+  rollNo: { type: String },
+  // 🔑 Added isBlocked for admin control
+  isBlocked: { type: Boolean, default: false }
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);
